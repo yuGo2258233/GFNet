@@ -47,17 +47,6 @@ def visualize_matches(im_1, im_2, pos_a, pos_b, inliers_mask, save_path, img_sha
         mask = inliers_mask.ravel().astype(bool)
         inliers_indices = np.where(mask)[0]
 
-    # Limit to a subset for visualization if too many
-    if len(inliers_indices) > 50:
-        inliers_indices = np.random.choice(inliers_indices, 50, replace=False)
-
-    # We can also show some outliers? For now just show inliers or a subset
-    # kornia_moons expects torch tensors
-
-    # Selecting points for viz
-    # If we want to show all matches with color coding:
-    # But usually we just want to see "good" matches (inliers of RANSAC)
-
     # If no inliers, assume empty
     if len(inliers_indices) == 0:
         # Just save the images side by side?
