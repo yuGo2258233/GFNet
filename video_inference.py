@@ -35,7 +35,7 @@ def load_model(conf_path, ckpt_path, device):
     return model
 
 
-def visualize_matches(im_1, im_2, pos_a, pos_b, inliers_mask, save_path):
+def visualize_matches(im_1, im_2, pos_a, pos_b, inliers_mask, save_path, img_shape=None):
     # Visualize matches
     plt.clf()
     # If inliers_mask is None (homography failed), show all as tentative or handle gracefully
@@ -64,8 +64,19 @@ def visualize_matches(im_1, im_2, pos_a, pos_b, inliers_mask, save_path):
         # Or just skip
         return
 
-    viz_pos_a = pos_a[inliers_indices]
-    viz_pos_b = pos_b[inliers_indices]
+    viz_pos_a = pos_a[inliers_indices].copy()
+    viz_pos_b = pos_b[inliers_indices].copy()
+
+    if img_shape is not None:
+        vis_w, vis_h = img_shape
+        orig_w1, orig_h1 = im_1.size
+        orig_w2, orig_h2 = im_2.size
+        viz_pos_a[:, 0] *= vis_w / orig_w1
+        viz_pos_a[:, 1] *= vis_h / orig_h1
+        viz_pos_b[:, 0] *= vis_w / orig_w2
+        viz_pos_b[:, 1] *= vis_h / orig_h2
+        im_1 = im_1.resize((vis_w, vis_h), Image.BILINEAR)
+        im_2 = im_2.resize((vis_w, vis_h), Image.BILINEAR)
 
     draw_LAF_matches(
         KF.laf_from_center_scale_ori(
@@ -112,6 +123,14 @@ def main():
     )
     parser.add_argument(
         "--skip_visualization", action="store_true", help="Skip saving match images"
+    )
+    parser.add_argument(
+        "--vis_resolution",
+        type=int,
+        nargs=2,
+        default=None,
+        metavar=("WIDTH", "HEIGHT"),
+        help="Resize visualization images to this resolution (default: original resolution)",
     )
 
     args = parser.parse_args()
@@ -173,7 +192,10 @@ def main():
         # Visualize
         if not args.skip_visualization:
             viz_path = os.path.join(vis_dir, f"match_{frame_idx}_{frame_idx+1}.png")
-            visualize_matches(prev_im, curr_im, pos_a, pos_b, inliers_mask, viz_path)
+            visualize_matches(
+                prev_im, curr_im, pos_a, pos_b, inliers_mask, viz_path,
+                img_shape=tuple(args.vis_resolution) if args.vis_resolution else None,
+            )
 
         prev_im = curr_im
         print(
