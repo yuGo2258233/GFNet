@@ -174,7 +174,7 @@ def main():
         )
         np.save(
             match_save_path,
-            {"keypoint0": pos_a, "keypoint1": pos_b},
+            {"keypoints0": pos_a, "keypoints1": pos_b},
             allow_pickle=True,
         )
 
